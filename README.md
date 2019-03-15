@@ -153,3 +153,7 @@ haskell-code-server --package PATH --port 8080 --use-hoogle-api
 ```
 
 Open [http://localhost:8080](http://localhost:8080) in a browser to explore source code of the package.
+
+## VSCode Extension
+
+There is an experimental VSCode extension for Haskell Code Explorer in [vscode-extension](vscode-extension).
