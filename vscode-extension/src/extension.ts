@@ -320,8 +320,21 @@ class HceHoverProvider implements vscode.HoverProvider {
         return;
       }
 
+      let contents: vscode.MarkedString[] = [
+        { language: "haskell", value: hoverInfo }
+      ];
+
+      const hackageUrl = getHackageDocumentationUrl(occurrence.sort.contents);
+      if (hackageUrl) {
+        contents.push(
+          new vscode.MarkdownString(`[Hackage documentation](${hackageUrl})`)
+        );
+      } else {
+        console.log("no hackage url!!");
+      }
+
       return {
-        contents: [{ language: "haskell", value: hoverInfo }],
+        contents: contents,
         range: wordRange
       };
     }
@@ -379,6 +392,13 @@ class HceHoverProvider implements vscode.HoverProvider {
             locationInfo.startColumn +
             "`"
         )
+      );
+    }
+
+    const hackageUrl = getHackageDocumentationUrl(identifier.locationInfo);
+    if (hackageUrl) {
+      contents.push(
+        new vscode.MarkdownString(`[Hackage documentation](${hackageUrl})`)
       );
     }
 
@@ -771,6 +791,55 @@ function getExpressionType(
   return `${name} :: ${signature}`;
 }
 
+function getHackageDocumentationUrl(
+  locationInfo: hce.LocationInfo
+): string | undefined {
+  if (locationInfo.tag !== "ApproximateLocation") {
+    return;
+  }
+
+  const isInternalPackage = !!globalState.haskellPackages.find(
+    p => p.packageId.name === locationInfo.packageId.name
+  );
+  if (isInternalPackage) {
+    return;
+  }
+
+  const packageUri = packageIdToString(locationInfo.packageId);
+  const moduleUri = locationInfo.moduleName.replace(/\./g, "-");
+
+  let anchor = "";
+  const haddockAnchorId = locationInfo.haddockAnchorId;
+  if (haddockAnchorId) {
+    anchor = geHaddockAnchor(locationInfo.entity, haddockAnchorId);
+  }
+
+  return (
+    "https://hackage.haskell.org/package/" +
+    packageUri +
+    "/docs/" +
+    moduleUri +
+    ".html" +
+    anchor
+  );
+}
+
+function geHaddockAnchor(
+  entity: hce.LocatableEntity,
+  haddockAnchorId: string
+): string {
+  switch (entity) {
+    case "Typ":
+      return `#t:${haddockAnchorId}`;
+    case "Val":
+      return `#v:${haddockAnchorId}`;
+    case "Inst":
+      return `#i:${haddockAnchorId}`;
+    case "Mod":
+      return "";
+  }
+}
+
 function wordRangeToOccurrenceId(wordRange: vscode.Range): hce.OccurenceId {
   // Note that VSCode lines/columns are 0-based, and Haskell Code Explorer start at 1
   return [
@@ -883,6 +952,7 @@ function getPackageIdFromCabalContents(
 
 function loadPackagesInfo() {
   vscode.workspace.findFiles("**/*.cabal").then(uris => {
+    uris = uris.filter(x => !x.path.match(/\.stack-work/));
     uris = uris.filter(x => x.scheme === "file");
     const cabalFiles = uris.map(x => x.path);
 
