@@ -74,6 +74,7 @@ export type TypeComponent =
 export type IdentifierOccurrence = {
   internalId?: InternalId;
   isBinder: boolean;
+  idOccType?: Type;
   sort: IdentifierOccurrenceSort;
 };
 

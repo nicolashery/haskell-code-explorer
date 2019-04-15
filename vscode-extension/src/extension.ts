@@ -339,8 +339,26 @@ class HceHoverProvider implements vscode.HoverProvider {
       return;
     }
 
+    const contents: vscode.MarkedString[] = [
+      {
+        language: "haskell",
+        value: getExpressionType(identifier, identifier.idType)
+      }
+    ];
+
+    if (occurrence.idOccType) {
+      contents.push(
+        new vscode.MarkdownString(
+          "Instantiated type:\n\n" +
+            "```haskell\n" +
+            getExpressionType(identifier, occurrence.idOccType) +
+            "\n```"
+        )
+      );
+    }
+
     return {
-      contents: [{ language: "haskell", value: getExpressionType(identifier) }],
+      contents: contents,
       range: wordRange
     };
   }
@@ -717,11 +735,14 @@ function getTypeSignature(type: hce.Type): string {
     .join("");
 }
 
-function getExpressionType(identifier: hce.IntentifierInfo): string {
+function getExpressionType(
+  identifier: hce.IntentifierInfo,
+  type: hce.Type
+): string {
   const name = identifier.demangledOccName
     ? identifier.demangledOccName
     : identifier.occName;
-  const signature = getTypeSignature(identifier.idType);
+  const signature = getTypeSignature(type);
   return `${name} :: ${signature}`;
 }
 
