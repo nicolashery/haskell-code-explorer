@@ -357,6 +357,31 @@ class HceHoverProvider implements vscode.HoverProvider {
       );
     }
 
+    const locationInfo = identifier.locationInfo;
+    if (locationInfo.tag === "ApproximateLocation") {
+      contents.push(
+        new vscode.MarkdownString(
+          "Defined in package `" +
+            locationInfo.packageId.name +
+            "` module `" +
+            locationInfo.moduleName +
+            "`"
+        )
+      );
+    } else if (locationInfo.tag === "ExactLocation") {
+      contents.push(
+        new vscode.MarkdownString(
+          "Defined in `" +
+            locationInfo.modulePath +
+            "` line `" +
+            locationInfo.startLine +
+            "` column `" +
+            locationInfo.startColumn +
+            "`"
+        )
+      );
+    }
+
     return {
       contents: contents,
       range: wordRange

@@ -103,7 +103,7 @@ export type LocationInfo =
       haddockAnchorId?: string;
       componentId: ComponentId;
     }
-  | { tag: "UnknownLocation" };
+  | { tag: "UnknownLocation"; contents: string };
 
 export type PackageId = {
   name: string;
